@@ -82,6 +82,20 @@ func TestDepositServer_Deposit(t *testing.T) {
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}),
 	)
+	nonBlockClient := MustNewClient(
+		RpcClientConf{
+			Endpoints: []string{"foo"},
+			App:       "foo",
+			Token:     "bar",
+			Timeout:   1000,
+			NonBlock:  true,
+		},
+		WithDialOption(grpc.WithContextDialer(dialer())),
+		WithUnaryClientInterceptor(func(ctx context.Context, method string, req, reply interface{},
+			cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}),
+	)
 	tarConfClient := MustNewClient(
 		RpcClientConf{
 			Target:  "foo",
@@ -105,6 +119,7 @@ func TestDepositServer_Deposit(t *testing.T) {
 	assert.Nil(t, err)
 	clients := []Client{
 		directClient,
+		nonBlockClient,
 		tarConfClient,
 		targetClient,
 	}

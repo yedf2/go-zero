@@ -104,10 +104,10 @@ GO111MODULE=on GOPROXY=https://goproxy.cn/,direct go get -u github.com/tal-tech/
 
     ```shell
     # Go 1.15 及之前版本
-    GO111MODULE=on GOPROXY=https://goproxy.cn/,direct go get -u github.com/tal-tech/go-zero/tools/goctl
+    GO111MODULE=on GOPROXY=https://goproxy.cn/,direct go get -u github.com/tal-tech/go-zero/tools/goctl@cli
     
     # Go 1.16 及以后版本
-    go install github.com/tal-tech/go-zero/tools/goctl@latest
+    GOPROXY=https://goproxy.cn/,direct go install github.com/tal-tech/go-zero/tools/goctl@cli
     ```
 
     确保 goctl 可执行
@@ -231,6 +231,7 @@ go-zero 已被许多公司用于生产部署，接入场景如在线教育、电
 >45. 成都艾途教育科技集团有限公司
 >46. 上海游族网络
 >47. 深信服
+>48. 中免日上科技互联有限公司
 
 如果贵公司也已使用 go-zero，欢迎在 [登记地址](https://github.com/zeromicro/go-zero/issues/602) 登记，仅仅为了推广，不做其它用途。
 

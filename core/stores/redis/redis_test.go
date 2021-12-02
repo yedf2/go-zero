@@ -11,6 +11,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	red "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
+	"github.com/tal-tech/go-zero/core/stringx"
 )
 
 func TestRedis_Exists(t *testing.T) {
@@ -186,7 +187,7 @@ func TestRedis_Hscan(t *testing.T) {
 		key := "hash:test"
 		fieldsAndValues := make(map[string]string)
 		for i := 0; i < 1550; i++ {
-			fieldsAndValues["filed_"+strconv.Itoa(i)] = randomStr(i)
+			fieldsAndValues["filed_"+strconv.Itoa(i)] = stringx.Randn(i)
 		}
 		err := client.Hmset(key, fieldsAndValues)
 		assert.Nil(t, err)
@@ -256,13 +257,24 @@ func TestRedis_Keys(t *testing.T) {
 func TestRedis_HyperLogLog(t *testing.T) {
 	runOnRedis(t, func(client *Redis) {
 		client.Ping()
-		r := New(client.Addr, badType())
-		_, err := r.Pfadd("key1")
-		assert.NotNil(t, err)
-		_, err = r.Pfcount("*")
-		assert.NotNil(t, err)
-		err = r.Pfmerge("*")
-		assert.NotNil(t, err)
+		r := New(client.Addr)
+		ok, err := r.Pfadd("key1", "val1")
+		assert.Nil(t, err)
+		assert.True(t, ok)
+		val, err := r.Pfcount("key1")
+		assert.Nil(t, err)
+		assert.Equal(t, int64(1), val)
+		ok, err = r.Pfadd("key2", "val2")
+		assert.Nil(t, err)
+		assert.True(t, ok)
+		val, err = r.Pfcount("key2")
+		assert.Nil(t, err)
+		assert.Equal(t, int64(1), val)
+		err = r.Pfmerge("key1", "key2")
+		assert.Nil(t, err)
+		val, err = r.Pfcount("key1")
+		assert.Nil(t, err)
+		assert.Equal(t, int64(2), val)
 	})
 }
 
@@ -539,7 +551,7 @@ func TestRedis_Sscan(t *testing.T) {
 		key := "list"
 		var list []string
 		for i := 0; i < 1550; i++ {
-			list = append(list, randomStr(i))
+			list = append(list, stringx.Randn(i))
 		}
 		lens, err := client.Sadd(key, list)
 		assert.Nil(t, err)

@@ -8,10 +8,10 @@ import (
 
 	red "github.com/go-redis/redis"
 	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/tal-tech/go-zero/core/stringx"
 )
 
 const (
-	letters     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lockCommand = `if redis.call("GET", KEYS[1]) == ARGV[1] then
     redis.call("SET", KEYS[1], ARGV[1], "PX", ARGV[2])
     return "OK"
@@ -45,7 +45,7 @@ func NewRedisLock(store *Redis, key string) *RedisLock {
 	return &RedisLock{
 		store: store,
 		key:   key,
-		id:    randomStr(randomLen),
+		id:    stringx.Randn(randomLen),
 	}
 }
 
@@ -91,12 +91,4 @@ func (rl *RedisLock) Release() (bool, error) {
 // SetExpire sets the expire.
 func (rl *RedisLock) SetExpire(seconds int) {
 	atomic.StoreUint32(&rl.seconds, uint32(seconds))
-}
-
-func randomStr(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }

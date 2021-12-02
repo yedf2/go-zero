@@ -30,6 +30,7 @@ type Docker struct {
 	HasPort   bool
 	Port      int
 	Argument  string
+	Version   string
 }
 
 // DockerCommand provides the entry for goctl docker
@@ -42,6 +43,11 @@ func DockerCommand(c *cli.Context) (err error) {
 
 	goFile := c.String("go")
 	home := c.String("home")
+	version := c.String("version")
+
+	if len(version) > 0 {
+		version = version + "-"
+	}
 
 	if len(home) > 0 {
 		util.RegisterGoctlHome(home)
@@ -57,7 +63,7 @@ func DockerCommand(c *cli.Context) (err error) {
 
 	port := c.Int("port")
 	if _, err := os.Stat(etcDir); os.IsNotExist(err) {
-		return generateDockerfile(goFile, port)
+		return generateDockerfile(goFile, port, version)
 	}
 
 	cfg, err := findConfig(goFile, etcDir)
@@ -65,13 +71,13 @@ func DockerCommand(c *cli.Context) (err error) {
 		return err
 	}
 
-	if err := generateDockerfile(goFile, port, "-f", "etc/"+cfg); err != nil {
+	if err := generateDockerfile(goFile, port, version, "-f", "etc/"+cfg); err != nil {
 		return err
 	}
 
 	projDir, ok := util.FindProjectPath(goFile)
 	if ok {
-		fmt.Printf("Hint: run \"docker build ...\" command in dir %q\n", projDir)
+		fmt.Printf("Hint: run \"docker build ...\" command in dir:\n    %s\n", projDir)
 	}
 
 	return nil
@@ -106,7 +112,7 @@ func findConfig(file, dir string) (string, error) {
 	return files[0], nil
 }
 
-func generateDockerfile(goFile string, port int, args ...string) error {
+func generateDockerfile(goFile string, port int, version string, args ...string) error {
 	projPath, err := getFilePath(filepath.Dir(goFile))
 	if err != nil {
 		return err
@@ -114,11 +120,6 @@ func generateDockerfile(goFile string, port int, args ...string) error {
 
 	if len(projPath) == 0 {
 		projPath = "."
-	} else {
-		pos := strings.IndexByte(projPath, os.PathSeparator)
-		if pos >= 0 {
-			projPath = projPath[pos+1:]
-		}
 	}
 
 	out, err := util.CreateIfNotExist(dockerfileName)
@@ -147,6 +148,7 @@ func generateDockerfile(goFile string, port int, args ...string) error {
 		HasPort:   port > 0,
 		Port:      port,
 		Argument:  builder.String(),
+		Version:   version,
 	})
 }
 
@@ -161,6 +163,12 @@ func getFilePath(file string) (string, error) {
 		projPath, err = util.PathFromGoSrc()
 		if err != nil {
 			return "", errors.New("no go.mod found, or not in GOPATH")
+		}
+
+		// ignore project root directory for GOPATH mode
+		pos := strings.IndexByte(projPath, os.PathSeparator)
+		if pos >= 0 {
+			projPath = projPath[pos+1:]
 		}
 	}
 
